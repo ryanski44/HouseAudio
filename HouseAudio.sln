@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioReceiver", "House
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioCommon", "HouseAudioCommon\HouseAudioCommon.csproj", "{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioTest", "HouseAudioTest\HouseAudioTest.csproj", "{9AD99900-F1E8-4A2F-8AEA-1152BFD28A66}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AD99900-F1E8-4A2F-8AEA-1152BFD28A66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AD99900-F1E8-4A2F-8AEA-1152BFD28A66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AD99900-F1E8-4A2F-8AEA-1152BFD28A66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AD99900-F1E8-4A2F-8AEA-1152BFD28A66}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

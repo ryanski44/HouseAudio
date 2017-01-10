@@ -17,8 +17,6 @@ namespace HouseAudioSender
     {
         private bool isRecording;
 
-        private WaveIn waveIn;
-
         private Stopwatch stopWatch;
         public DateTime StartTime { get; private set; }
         private long bytesSent;
@@ -31,7 +29,7 @@ namespace HouseAudioSender
             stopWatch = new Stopwatch();
         }
 
-        public void Start(IPAddress multicastaddress, int deviceNumber)
+        public void Start(IPAddress multicastaddress)
         {
             udpClient = new UdpClient();
             udpClient.JoinMulticastGroup(multicastaddress);
@@ -39,11 +37,7 @@ namespace HouseAudioSender
 
             bytesSent = 0;
             isRecording = true;
-            waveIn = new WaveIn();
-
-            waveIn.DeviceNumber = deviceNumber;
-            waveIn.DataAvailable += waveIn_DataAvailable;
-            waveIn.WaveFormat = new WaveFormat(Constants.Audio.SAMPLE_RATE, Constants.Audio.BIT_DEPTH, Constants.Audio.CHANNELS);
+            
             if (stopWatch.IsRunning)
             {
                 stopWatch.Stop();
@@ -59,12 +53,12 @@ namespace HouseAudioSender
             }
             StartTime = tick2;
             stopWatch.Start();
-            waveIn.StartRecording();
+            
             StartTime = StartTime.AddMilliseconds(stopWatch.ElapsedMilliseconds);
             stopWatch.Restart();
         }
 
-        void waveIn_DataAvailable(object sender, WaveInEventArgs e)
+        public void DataAvailable(object sender, WaveInEventArgs e)
         {
             if (isRecording && udpClient != null)
             {
@@ -86,8 +80,6 @@ namespace HouseAudioSender
             if (isRecording)
             {
                 isRecording = false;
-                waveIn.StopRecording();
-                waveIn.Dispose();
                 udpClient.Close();
                 udpClient.Dispose();
                 udpClient = null;

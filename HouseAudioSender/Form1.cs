@@ -20,6 +20,7 @@ namespace HouseAudioSender
 {
     public partial class Form1 : Form
     {
+        private WaveIn waveIn;
         private Sender audioSender;
 
         public Form1()
@@ -99,12 +100,23 @@ namespace HouseAudioSender
         {
             if (buttonStartStop.Text == "Start")
             {
-                audioSender.Start(IPAddress.Parse(textBoxUDPIP.Text), (comboBoxAudioSource.SelectedItem as WaveInAudioSource).DeviceId);
+                audioSender.Start(IPAddress.Parse(textBoxUDPIP.Text));
+
+                waveIn = new WaveIn();
+
+                waveIn.DeviceNumber = (comboBoxAudioSource.SelectedItem as WaveInAudioSource).DeviceId;
+                waveIn.DataAvailable += audioSender.DataAvailable;
+                waveIn.WaveFormat = new WaveFormat(Constants.Audio.SAMPLE_RATE, Constants.Audio.BIT_DEPTH, Constants.Audio.CHANNELS);
+
+                waveIn.StartRecording();
+
                 WriteLine("Started Recording at {0} UTC", audioSender.StartTime);
                 buttonStartStop.Text = "Stop";
             }
             else
             {
+                waveIn.StopRecording();
+                waveIn.Dispose();
                 audioSender.Stop();
                 buttonStartStop.Text = "Start";
             }
@@ -112,6 +124,8 @@ namespace HouseAudioSender
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            waveIn.StopRecording();
+            waveIn.Dispose();
             audioSender.Stop();
 
             Properties.Settings.Default.MyState = this.WindowState;
