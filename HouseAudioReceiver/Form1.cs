@@ -52,7 +52,12 @@ namespace HouseAudioReceiver
                     {
                         WriteDebugValue("WaveOutPosition", (receiver.WavePlayer.WaveOut.GetPosition() * 1000 / 4 / 44100).ToString());
                     }
-                    WriteDebugValue("LocalClockOffset", receiver.NtpClient.LocalClockOffset.ToString());
+                    WriteDebugValue("LocalClockOffset", receiver.LocalClockOffset.ToString());
+                    var curSegment = receiver.WavePlayer.CurrentSegment;
+                    if (curSegment != null)
+                    {
+                        WriteDebugValue("Received", curSegment.StartIndex.ToString());
+                    }
                     Thread.Sleep(500);
                 }
             }
@@ -60,11 +65,16 @@ namespace HouseAudioReceiver
 
         private void buttonConnect_Click(object sender, EventArgs e)
         {
-            receiver = new Receiver(textHost.Text, textNTPHost.Text);
+            if (receiver == null)
+            {
+                receiver = new Receiver(textHost.Text, textNTPHost.Text, TimeSpan.FromMilliseconds((double)numericUpDownDelay.Value));
 
-            receiver.Start();
+                numericUpDownJitter.Value = (decimal)receiver.LocalJitter.TotalMilliseconds;
 
-            debugThread.Start();
+                receiver.Start();
+
+                debugThread.Start();
+            }
         }
 
         private DateTime lastSentSync = DateTime.MinValue;
@@ -74,6 +84,31 @@ namespace HouseAudioReceiver
             dataGridView.AutoGenerateColumns = true;
             dataGridView.DefaultCellStyle.DataSourceNullValue = null;
             dataGridView.DataSource = debugCollection.BindingList;
+        }
+
+        private void numericUpDownDelay_ValueChanged(object sender, EventArgs e)
+        {
+            if (receiver != null)
+            {
+                receiver.Delay = TimeSpan.FromMilliseconds((double)numericUpDownDelay.Value);
+            }
+        }
+
+        private void numericUpDownJitter_ValueChanged(object sender, EventArgs e)
+        {
+            if(receiver != null)
+            {
+                receiver.LocalJitter = TimeSpan.FromMilliseconds((double)numericUpDownJitter.Value);
+            }
+        }
+
+        private void buttonAutoJitter_Click(object sender, EventArgs e)
+        {
+            if(receiver != null)
+            {
+                receiver.AutoJitter();
+                numericUpDownJitter.Value = (decimal)receiver.LocalJitter.TotalMilliseconds;
+            }
         }
     }
 }

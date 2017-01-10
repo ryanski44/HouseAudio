@@ -12,14 +12,14 @@ namespace HouseAudioReceiver
     {
         public WaveOut WaveOut;
         private IBufferAllocator<byte> bufferAllocator;
-        private AudioSegment currentSegment;
+        public AudioSegment CurrentSegment;
         public long Position { get; private set; }
 
         public WavPlayer(IBufferAllocator<byte> bufferAllocator)
         {
             this.bufferAllocator = bufferAllocator;
             WaveOut = new WaveOut();
-            currentSegment = null;
+            CurrentSegment = null;
             Position = 0;
         }
 
@@ -36,24 +36,24 @@ namespace HouseAudioReceiver
                 StartIndex = startByte,
                 Data = data
             };
-            if (currentSegment == null)
+            if (CurrentSegment == null)
             {
                 if(startByte + data.Length > Position)
                 {
-                    currentSegment = segment;
+                    CurrentSegment = segment;
                 }
             }
             else
             {
-                currentSegment.Insert(segment);
+                CurrentSegment.Insert(segment);
             }
         }
 
         private void RemoveCurrentSegment()
         {
-            if (currentSegment == null) return;
-            bufferAllocator.ReturnBuffer(currentSegment.Data);
-            currentSegment = currentSegment.NextSegment;
+            if (CurrentSegment == null) return;
+            bufferAllocator.ReturnBuffer(CurrentSegment.Data);
+            CurrentSegment = CurrentSegment.NextSegment;
         }
 
         public WaveFormat WaveFormat
@@ -66,18 +66,28 @@ namespace HouseAudioReceiver
             for (int targetIndex  = 0; targetIndex < count; targetIndex++)
             {
                 long sourceIndex = Position + targetIndex;
-                if(currentSegment != null && sourceIndex >= currentSegment.StartIndex && sourceIndex < currentSegment.StartIndex + currentSegment.Data.Length)
+                bool found = false;
+                while(CurrentSegment != null && sourceIndex >= CurrentSegment.StartIndex)
                 {
-                    int copyFrom = (int)(sourceIndex - currentSegment.StartIndex);
-                    int countToCopy = Math.Min(count - targetIndex, currentSegment.Data.Length - copyFrom);
-                    Buffer.BlockCopy(currentSegment.Data, copyFrom, buffer, targetIndex, countToCopy);
-                    targetIndex += countToCopy - 1;
-                    if(Position + targetIndex >= currentSegment.StartIndex + currentSegment.Data.Length)
+                    if (sourceIndex < CurrentSegment.StartIndex + CurrentSegment.Data.Length)
+                    {
+                        int copyFrom = (int)(sourceIndex - CurrentSegment.StartIndex);
+                        int countToCopy = Math.Min(count - targetIndex, CurrentSegment.Data.Length - copyFrom);
+                        Buffer.BlockCopy(CurrentSegment.Data, copyFrom, buffer, targetIndex, countToCopy);
+                        targetIndex += countToCopy - 1;
+                        found = true;
+                        if (Position + targetIndex >= CurrentSegment.StartIndex + CurrentSegment.Data.Length)
+                        {
+                            RemoveCurrentSegment();
+                        }
+                        break;
+                    }
+                    else
                     {
                         RemoveCurrentSegment();
                     }
                 }
-                else
+                if(!found)
                 {
                     buffer[targetIndex] = 0;
                 }

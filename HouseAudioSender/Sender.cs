@@ -65,7 +65,7 @@ namespace HouseAudioSender
                 AudioPacket packet = new AudioPacket()
                 {
                     AudioData = new byte[e.BytesRecorded],
-                    StartTicks = (StartTime + TimeSpan.FromSeconds(bytesSent / (Constants.Audio.BIT_DEPTH / 8 * Constants.Audio.CHANNELS) / Constants.Audio.SAMPLE_RATE)).Ticks
+                    StartTicks = (StartTime + TimeSpan.FromSeconds((double)bytesSent / (Constants.Audio.BIT_DEPTH / 8 * Constants.Audio.CHANNELS) / Constants.Audio.SAMPLE_RATE)).Ticks
                 };
                 Buffer.BlockCopy(e.Buffer, 0, packet.AudioData, 0, e.BytesRecorded);
                 MemoryStream ms = new MemoryStream();

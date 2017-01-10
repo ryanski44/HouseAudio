@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -16,11 +17,11 @@ namespace HouseAudioReceiver
     public class Receiver
     {
         public WavPlayer WavePlayer { get; private set; }
-        private volatile int LocalClockOffset;
+        public volatile int LocalClockOffset;
         private IBufferAllocator<byte> bufferAllocator;
 
-        private TimeSpan localJitter = TimeSpan.Zero;
-        private TimeSpan delay = TimeSpan.FromMilliseconds(1000);
+        public TimeSpan LocalJitter { get; set; }
+        public TimeSpan Delay { get; set; }
         private DateTime zeroPositionTime;
 
         public SNTPClient NtpClient { get; private set; }
@@ -29,8 +30,10 @@ namespace HouseAudioReceiver
 
         public string Host { get; set; }
 
-        public Receiver(string host, string ntpHost)
+        public Receiver(string host, string ntpHost, TimeSpan delay)
         {
+            this.Delay = delay;
+
             bufferAllocator = new BufferAllocator<byte>();
 
             clockSyncThread = new Thread(ClockSyncWorker);
@@ -44,47 +47,67 @@ namespace HouseAudioReceiver
             WavePlayer.Init();
 
             zeroPositionTime = DateTime.UtcNow;
-            long currentPosition = WavePlayer.WaveOut.GetPosition();
             Thread.Sleep(500);
-            TimeSpan elapsedIdeal = DateTime.UtcNow - zeroPositionTime;
-            TimeSpan elapsedPlayed = TimeSpan.FromSeconds((currentPosition / (Constants.Audio.BIT_DEPTH * Constants.Audio.CHANNELS / 8)) / Constants.Audio.SAMPLE_RATE);
-            localJitter = (elapsedIdeal - elapsedPlayed);
+            AutoJitter();
         }
 
         private void ClockSyncWorker()
         {
-            NtpClient.Connect(false);
-            LocalClockOffset = NtpClient.LocalClockOffset;
+            while (true)
+            {
+                try
+                {
+                    NtpClient.Connect(false);
+                    LocalClockOffset = NtpClient.LocalClockOffset;
+                }
+                catch (Exception ex) { }
+                Thread.Sleep(10000);
+            }
+        }
 
-            Thread.Sleep(10000);
+        private List<IPAddress> GetLocalIps()
+        {
+            return NetworkInterface
+                .GetAllNetworkInterfaces()
+                .Where(i => i.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ||
+                            i.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                .SelectMany(i => i.GetIPProperties().UnicastAddresses)
+                .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
+                .Select(a => a.Address)
+                .ToList();
         }
 
         public void Start()
         {
-            ThreadPool.QueueUserWorkItem(new WaitCallback(delegate { ReadPackets(); }));
+            Task.Run(async () =>
+            {
+                using (UdpClient udpClient = new UdpClient(Constants.Network.PORT))
+                {
+                    //IPEndPoint localEp =  new IPEndPoint(GetLocalIps().First(), Constants.Network.PORT);
+                    //udpClient.Client.Bind(localEp);
+
+                    IPAddress multicastAddr = IPAddress.Parse(Host);
+                    udpClient.JoinMulticastGroup(multicastAddr);
+
+                    while (true)//TODO: can stop
+                    {
+                        var data = await udpClient.ReceiveAsync();
+                        AudioPacket audioPacket = Serializer.Deserialize<AudioPacket>(new MemoryStream(data.Buffer));
+                        DateTime sampleStartTime = new DateTime(audioPacket.StartTicks);
+                        long targetSample = (long)((sampleStartTime - zeroPositionTime - LocalJitter + Delay - TimeSpan.FromMilliseconds(LocalClockOffset)).TotalSeconds * Constants.Audio.SAMPLE_RATE);
+                        long targetPosition = targetSample * Constants.Audio.BIT_DEPTH / 8 * Constants.Audio.CHANNELS;
+                        WavePlayer.AddAudioData(targetPosition, audioPacket.AudioData);
+                    }
+                }
+            });
         }
 
-        protected void ReadPackets()
+        internal void AutoJitter()
         {
-            using (UdpClient udpClient = new UdpClient())
-            {
-
-                IPEndPoint localEp = new IPEndPoint(IPAddress.Any, Constants.Network.PORT);
-                udpClient.Client.Bind(localEp);
-
-                IPAddress multicastAddr = IPAddress.Parse(Host);
-                udpClient.JoinMulticastGroup(multicastAddr);
-
-                while (true)//TODO: can stop
-                {
-                    byte[] data = udpClient.Receive(ref localEp);
-                    AudioPacket audioPacket = Serializer.Deserialize<AudioPacket>(new MemoryStream(data));
-                    DateTime sampleStartTime = new DateTime(audioPacket.StartTicks);
-                    long targetSample = (long)((sampleStartTime - zeroPositionTime - localJitter + delay).TotalSeconds * Constants.Audio.SAMPLE_RATE);
-                    long targetPosition = targetSample * Constants.Audio.BIT_DEPTH / 8 * Constants.Audio.CHANNELS;
-                    WavePlayer.AddAudioData(targetPosition, audioPacket.AudioData);
-                }
-            }
+            long currentPosition = WavePlayer.WaveOut.GetPosition();
+            TimeSpan elapsedIdeal = DateTime.UtcNow - zeroPositionTime;
+            TimeSpan elapsedPlayed = TimeSpan.FromSeconds(((double)currentPosition / (Constants.Audio.BIT_DEPTH * Constants.Audio.CHANNELS / 8)) / Constants.Audio.SAMPLE_RATE);
+            LocalJitter = (elapsedIdeal - elapsedPlayed);
         }
     }
 }
