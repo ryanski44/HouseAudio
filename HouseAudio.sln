@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioSender", "HouseAudioSender\HouseAudioSender.csproj", "{9804EF50-6625-4A8D-B344-A92CC65D3795}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioReceiver", "HouseAudioReceiver\HouseAudioReceiver.csproj", "{0C6AC22B-1F93-4068-BD81-39EBD2A2C244}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseAudioCommon", "HouseAudioCommon\HouseAudioCommon.csproj", "{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9804EF50-6625-4A8D-B344-A92CC65D3795}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9804EF50-6625-4A8D-B344-A92CC65D3795}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9804EF50-6625-4A8D-B344-A92CC65D3795}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9804EF50-6625-4A8D-B344-A92CC65D3795}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C6AC22B-1F93-4068-BD81-39EBD2A2C244}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C6AC22B-1F93-4068-BD81-39EBD2A2C244}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C6AC22B-1F93-4068-BD81-39EBD2A2C244}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C6AC22B-1F93-4068-BD81-39EBD2A2C244}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07FCB80D-E8D4-4F03-94DC-D6AE1B7C47AB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
